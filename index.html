@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trainer Notation Blind (Complet)</title>
+    <!-- Importation de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Style pour les polices et une meilleure apparence */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Style pour les stickers du cube */
+        .sticker {
+            width: 100%;
+            padding-top: 100%; /* Crée un carré parfait */
+            position: relative;
+            border: 2px solid #333;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.25rem; /* 20px */
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .sticker-inner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 4px;
+            text-align: center;
+            line-height: 1.2;
+        }
+        .sticker:hover {
+            transform: scale(1.05);
+            border-color: #fff;
+        }
+        /* Couleurs des faces */
+        .face-U { background-color: #FEFEFE; color: #333; }
+        .face-L { background-color: #FF6D00; color: #fff; }
+        .face-F { background-color: #00D800; color: #fff; }
+        .face-R { background-color: #DD0000; color: #fff; }
+        .face-B { background-color: #0045FF; color: #fff; }
+        .face-D { background-color: #FFD500; color: #333; }
+        .face-empty {
+            border: none;
+            box-shadow: none;
+            background-color: transparent;
+            cursor: default;
+        }
+        .face-empty:hover {
+            transform: none;
+        }
+        /* Style pour les onglets actifs */
+        .tab-active {
+            background-color: #3B82F6; /* blue-500 */
+            color: white;
+        }
+        
+        /* Styles pour le modal de paramètres */
+        #settings-modal {
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+        .settings-input {
+            width: 100%;
+            padding: 2px;
+            border-radius: 4px;
+            background-color: #4B5563; /* gray-600 */
+            color: white;
+            text-align: center;
+            font-size: 0.7rem;
+            border: 1px solid #6B7280; /* gray-500 */
+        }
+        .settings-input-empty {
+            background-color: #374151; /* gray-700 */
+        }
+        
+        /* NOUVEAU: Style pour les inputs désactivés */
+        .settings-input:disabled {
+            background-color: #374151; /* gray-700 */
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        /* Styles pour la vue isométrique (Quiz Inverse) */
+        .quiz-piece-container {
+            position: relative;
+            gap: 0.5rem; /* 8px */
+            justify-content: center;
+            align-items: center;
+            width: 10rem;
+            height: 10rem;
+            transform-style: preserve-3d;
+            /* Rotation pour la vue isométrique UFR (Haut-Avant-Droite) */
+            transform: rotateX(-33deg) rotateY(-45deg);
+            margin-top: 4rem;
+            margin-bottom: 4rem;
+        }
+
+        .quiz-view-sticker {
+            width: 6rem; /* 96px */
+            height: 6rem; /* 96px */
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: 2px solid #333;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.5rem; /* 24px */
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            opacity: 0.95;
+        }
+
+        .quiz-view-highlight {
+            border-width: 4px;
+            border-color: #FACC15; /* yellow-400 */
+            box-shadow: 0 0 20px #FACC15;
+            z-index: 10;
+            opacity: 1;
+        }
+
+        /* Classes de position isométrique */
+        .iso-U { transform: rotateX(90deg) translateZ(3rem); }
+        .iso-F { transform: translateZ(3rem); }
+        .iso-R { transform: rotateY(90deg) translateZ(3rem); }
+        .iso-L { transform: rotateY(-90deg) translateZ(3rem); }
+        .iso-B { transform: rotateY(180deg) translateZ(3rem); }
+        .iso-D { transform: rotateX(-90deg) translateZ(3rem); }
+
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen p-4 sm:p-8 flex flex-col items-center">
+
+    <div class="w-full max-w-4xl mx-auto">
+        
+        <header class="text-center mb-6 relative">
+            <h1 class="text-3xl sm:text-4xl font-bold text-white">Apprentissage Blind (Complet)</h1>
+            <p class="text-lg text-gray-400 mt-2">Schéma de lettrage personnalisable</p>
+            <button id="btn-settings" class="absolute top-0 right-0 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition">
+                Modifier
+            </button>
+        </header>
+
+        <!-- Sélecteurs d'onglets (Type) -->
+        <div class="flex justify-center gap-4 mb-4">
+            <button id="btn-corners" class="tab-btn px-6 py-2 rounded-lg font-semibold text-lg transition duration-200">Coins</button>
+            <button id="btn-edges" class="tab-btn px-6 py-2 rounded-lg font-semibold text-lg transition duration-200">Arêtes</button>
+        </div>
+        <!-- Sélecteurs d'onglets (Mode) - MODIFIÉ -->
+        <div class="flex flex-wrap justify-center gap-4 mb-6">
+            <button id="btn-learn" class="mode-btn px-5 py-2 rounded-lg font-medium transition duration-200">Apprendre</button>
+            <button id="btn-quiz-direct" class="mode-btn px-5 py-2 rounded-lg font-medium transition duration-200">Quiz (Lettre -> Pièce)</button>
+            <button id="btn-quiz-inverse" class="mode-btn px-5 py-2 rounded-lg font-medium transition duration-200">Quiz (Pièce -> Lettre)</button>
+        </div>
+
+        <!-- Zone de Quiz (Directe) -->
+        <div id="quiz-zone-direct" class="text-center mb-4 h-24 flex flex-col justify-center items-center hidden">
+            <h2 id="quiz-prompt-direct" class="text-3xl font-bold text-yellow-400"></h2>
+            <p id="quiz-feedback-direct" class="text-xl mt-2 h-8"></p>
+        </div>
+
+        <!-- Zone de Quiz (Inverse) -->
+        <div id="quiz-zone-inverse" class="text-center mb-4 h-24 flex flex-col justify-center items-center hidden">
+            <h2 id="quiz-prompt-inverse" class="text-2xl font-semibold text-white mb-3">Quelle est la lettre pour cette pièce ?</h2>
+            <div class="flex gap-2">
+                <input type="text" id="quiz-input" maxlength="1" class="w-16 h-12 text-center text-3xl font-bold bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button id="btn-submit-guess" class="h-12 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition">Valider</button>
+            </div>
+            <p id="quiz-feedback-inverse" class="text-xl mt-3 h-8"></p>
+        </div>
+
+
+        <!-- Grille du Cube (Net) / Conteneur de Pièce -->
+        <div id="cube-net" class="max-w-2xl mx-auto select-none">
+            <!-- Le contenu sera généré par JS -->
+        </div>
+
+    </div>
+
+    <!-- Modal de Paramètres (Identique aux deux fichiers) -->
+    <div id="settings-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Modifier le schéma de lettrage</h2>
+                <button id="btn-close-modal" class="text-3xl text-gray-400 hover:text-white">&times;</button>
+            </div>
+            
+            <p class="text-gray-400 mb-4 text-sm">
+                Modifiez uniquement les lettres ci-dessous. Les centres (ex: "X:U") et les cases vides (".") sont grisés et non modifiables.
+            </p>
+            
+            <!-- Grille d'édition -->
+            <!-- CORRECTION: Ajout de la div manquante pour la grille -->
+            <div id="settings-grid" class="grid grid-cols-12 gap-1 mb-4">
+                <!-- La grille d'inputs sera générée par JS -->
+            </div>
+            
+            <div class="flex justify-between items-center">
+                <button id="btn-reset-settings" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition">
+                    Réinitialiser (Défaut)
+                </button>
+                <div class="flex gap-4">
+                    <button id="btn-cancel-settings" class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition">
+                        Annuler
+                    </button>
+                    <button id="btn-save-settings" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition font-semibold">
+                        Sauvegarder
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- SCHÉMA ET ÉTAT GLOBAL ---
+
+        // Schéma par défaut
+        const defaultNetLayout = [
+            ['.', '.', '.', 'C:UBL:D', 'E:UB:E', 'C:UBR:G', '.', '.', '.', '.', '.', '.'],
+            ['.', '.', '.', 'E:UL:C',  'X:U',    'E:UR:G',  '.', '.', '.', '.', '.', '.'],
+            ['.', '.', '.', 'C:UFL:A', 'E:UF:A', 'C:UFR:J', '.', '.', '.', '.', '.', '.'],
+
+            ['C:LBU:E', 'E:LU:D', 'C:LUF:C', 'C:FLU:B', 'E:FU:B', 'C:FRU:L', 'C:RUF:K', 'E:RU:H', 'C:RBU:I', 'C:BUR:H', 'E:BU:F', 'C:BUL:F'],
+            ['E:LB:X',  'X:L',    'E:LF:T',  'E:FL:S',  'X:F',    'E:FR:Q',  'E:RF:R',  'X:R',    'E:RB:Z',  'E:BL:Y',  'X:B',    'E:BR:W'],
+            ['C:LDB:Q', 'E:LD:L', 'C:LFD:M', 'C:FLD:N', 'E:FD:J', 'C:FDR:Y', 'C:RDF:Z', 'E:RD:P', 'C:RBD:S', 'C:BDL:T', 'E:BD:N', 'C:BDR:P'],
+            
+            ['.', '.', '.', 'C:DFL:W', 'E:DF:I', 'C:DFR:X', '.', '.', '.', '.', '.', '.'],
+            ['.', '.', '.', 'E:DL:K',  'X:D',    'E:DR:O',  '.', '.', '.', '.', '.', '.'],
+            ['.', '.', '.', 'C:DBL:O', 'E:DB:M', 'C:DBR:R', '.', '.', '.', '.', '.', '.']
+        ];
+        
+        let netLayout; // Le schéma principal (chargé depuis localStorage)
+        
+        const faceColors = {
+            U: 'face-U', L: 'face-L', F: 'face-F', R: 'face-R', B: 'face-B', D: 'face-D'
+        };
+
+        // État de l'application
+        let currentType = 'corners'; // 'corners' ou 'edges'
+        let currentMode = 'learn'; // 'learn', 'quiz-direct', 'quiz-inverse'
+        let quizTargetPiece = null;
+        let quizTargetLetter = '';
+        let quizActive = false;
+
+        // --- ÉLÉMENTS DOM ---
+
+        const cubeNet = document.getElementById('cube-net');
+        // Boutons de Type
+        const btnCorners = document.getElementById('btn-corners');
+        const btnEdges = document.getElementById('btn-edges');
+        // Boutons de Mode (MODIFIÉ)
+        const btnLearn = document.getElementById('btn-learn');
+        const btnQuizDirect = document.getElementById('btn-quiz-direct');
+        const btnQuizInverse = document.getElementById('btn-quiz-inverse');
+        
+        // Zones de Quiz (MODIFIÉ)
+        const quizZoneDirect = document.getElementById('quiz-zone-direct');
+        const quizPromptDirect = document.getElementById('quiz-prompt-direct');
+        const quizFeedbackDirect = document.getElementById('quiz-feedback-direct');
+        
+        const quizZoneInverse = document.getElementById('quiz-zone-inverse');
+        const quizPromptInverse = document.getElementById('quiz-prompt-inverse');
+        const quizFeedbackInverse = document.getElementById('quiz-feedback-inverse');
+        const quizInput = document.getElementById('quiz-input');
+        const btnSubmitGuess = document.getElementById('btn-submit-guess');
+
+        // Éléments DOM du Modal
+        const btnSettings = document.getElementById('btn-settings');
+        const settingsModal = document.getElementById('settings-modal');
+        const btnCloseModal = document.getElementById('btn-close-modal');
+        const btnCancelSettings = document.getElementById('btn-cancel-settings');
+        const btnSaveSettings = document.getElementById('btn-save-settings');
+        const btnResetSettings = document.getElementById('btn-reset-settings');
+        const settingsGrid = document.getElementById('settings-grid');
+
+        // --- INITIALISATION ---
+        
+        loadLayout();
+        setupTabs();
+        setupSettingsModal();
+        setupQuizInput(); // Pour le quiz inverse
+        renderNet();
+        
+        // --- GESTION DES PARAMÈTRES (MODAL) ---
+        // (Copie de la logique des fichiers précédents)
+
+        function loadLayout() {
+            const savedLayout = localStorage.getItem('blindTrainerLayout');
+            try {
+                if (savedLayout) {
+                    const parsedLayout = JSON.parse(savedLayout);
+                    if (Array.isArray(parsedLayout) && parsedLayout.length === 9 && Array.isArray(parsedLayout[0]) && parsedLayout[0].length === 12) {
+                        netLayout = parsedLayout;
+                        return;
+                    }
+                }
+            } catch (e) {
+                localStorage.removeItem('blindTrainerLayout'); 
+            }
+            netLayout = JSON.parse(JSON.stringify(defaultNetLayout));
+        }
+        
+        function setupSettingsModal() {
+            btnSettings.addEventListener('click', openSettingsModal);
+            btnCloseModal.addEventListener('click', closeSettingsModal);
+            btnCancelSettings.addEventListener('click', closeSettingsModal);
+            settingsModal.addEventListener('click', (e) => {
+                if (e.target === settingsModal) closeSettingsModal();
+            });
+            btnSaveSettings.addEventListener('click', saveSettings);
+            btnResetSettings.addEventListener('click', resetSettings);
+        }
+
+        function openSettingsModal() {
+            populateSettingsModal();
+            settingsModal.classList.remove('hidden');
+            settingsModal.classList.add('flex');
+        }
+
+        function closeSettingsModal() {
+            settingsModal.classList.add('hidden');
+            settingsModal.classList.remove('flex');
+        }
+
+        function populateSettingsModal() {
+            settingsGrid.innerHTML = ''; // Vider la grille
+            netLayout.forEach(row => {
+                row.forEach(cell => {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'settings-input';
+                    
+                    const parts = cell.split(':');
+
+                    if (cell === '.' || parts[0] === 'X') {
+                        // Centres ou cases vides
+                        input.value = cell;
+                        input.disabled = true;
+                        input.classList.add('settings-input-empty');
+                    } else if (parts.length === 3) {
+                        // Pièces (Coins ou Arêtes) - C:UFL:A
+                        const [type, piece, letter] = parts;
+                        const prefix = `${type}:${piece}:`;
+                        input.value = (letter && letter !== '.') ? letter : ''; // Affiche "A" ou ""
+                        input.dataset.prefix = prefix; // Stocke "C:UFL:"
+                        input.maxLength = 1; // Limite à un seul caractère
+                    } else {
+                        // Données invalides (au cas où)
+                        input.value = cell;
+                        input.disabled = true;
+                        input.classList.add('settings-input-empty');
+                    }
+                    
+                    settingsGrid.appendChild(input);
+                });
+            });
+        }
+
+        // NOUVEAU: Sauvegarder les modifications
+        function saveSettings() {
+            const inputs = settingsGrid.querySelectorAll('input');
+            const newLayout = [];
+            let rowIndex = -1;
+            
+            inputs.forEach((input, index) => {
+                const colIndex = index % 12;
+                if (colIndex === 0) {
+                    newLayout.push([]);
+                    rowIndex++;
+                }
+                
+                if (input.disabled) {
+                    // Si l'input est désactivé (centre ou vide), on reprend sa valeur d'origine
+                    newLayout[rowIndex].push(input.value);
+                } else {
+                    // Si c'est un champ de lettre éditable
+                    const prefix = input.dataset.prefix; // ex: "C:UFL:"
+                    let newLetter = input.value.trim().toUpperCase();
+                    if (newLetter === '') {
+                        newLetter = '.'; // Traite un champ vide comme un buffer
+                    }
+                    newLayout[rowIndex].push(prefix + newLetter); // Reconstruit "C:UFL:A"
+                }
+            });
+            
+            // Mettre à jour le layout global
+            netLayout = newLayout;
+            
+            // Sauvegarder dans localStorage
+            try {
+                localStorage.setItem('blindTrainerLayout', JSON.stringify(netLayout));
+            } catch (e) {
+                console.error("Erreur lors de la sauvegarde du schéma:", e);
+            }
+            
+            // Fermer le modal et mettre à jour l'application
+            closeSettingsModal();
+            renderNet();
+        }
+
+        // CORRECTION: Ajout de la fonction resetSettings() manquante
+        function resetSettings() {
+            if (confirm("Voulez-vous vraiment réinitialiser le schéma par défaut ?\nVos modifications seront perdues.")) {
+                localStorage.removeItem('blindTrainerLayout');
+                netLayout = JSON.parse(JSON.stringify(defaultNetLayout));
+                
+                // Le plus simple est d'appeler saveSettings, qui met à jour le layout,
+                // sauvegarde, ferme le modal et re-render.
+                saveSettings();
+            }
+        }
+
+        // --- GESTION DES ONGLETS ET MODES (MODIFIÉ) ---
+        // CORRECTION: Remplacement du code erroné par la fonction setupTabs()
+        function setupTabs() {
+            // Boutons de Type
+            btnCorners.addEventListener('click', () => {
+                currentType = 'corners';
+                updateTabs();
+                renderNet(); // Re-render pour (dés)activer les stickers
+            });
+            btnEdges.addEventListener('click', () => {
+                currentType = 'edges';
+                updateTabs();
+                renderNet();
+            });
+            
+            // Boutons de Mode
+            btnLearn.addEventListener('click', () => {
+                currentMode = 'learn';
+                quizActive = false;
+                updateTabs();
+                renderNet();
+            });
+            btnQuizDirect.addEventListener('click', () => {
+                currentMode = 'quiz-direct';
+                updateTabs();
+                startQuiz(); // Démarre le quiz
+            });
+            btnQuizInverse.addEventListener('click', () => {
+                currentMode = 'quiz-inverse';
+                updateTabs();
+                startQuiz(); // Démarre le quiz
+            });
+            
+            updateTabs(); // État initial
+        }
+
+        function updateTabs() {
+            // Type
+            btnCorners.classList.toggle('tab-active', currentType === 'corners');
+            btnCorners.classList.toggle('bg-gray-700', currentType !== 'corners');
+            btnEdges.classList.toggle('tab-active', currentType === 'edges');
+            btnEdges.classList.toggle('bg-gray-700', currentType !== 'edges');
+            
+            // Mode
+            btnLearn.classList.toggle('tab-active', currentMode === 'learn');
+            btnLearn.classList.toggle('bg-gray-700', currentMode !== 'learn');
+            btnQuizDirect.classList.toggle('tab-active', currentMode === 'quiz-direct');
+            btnQuizDirect.classList.toggle('bg-gray-700', currentMode !== 'quiz-direct');
+            btnQuizInverse.classList.toggle('tab-active', currentMode === 'quiz-inverse');
+            btnQuizInverse.classList.toggle('bg-gray-700', currentMode !== 'quiz-inverse');
+
+            // Afficher/Cacher les zones de quiz
+            quizZoneDirect.classList.toggle('hidden', currentMode !== 'quiz-direct');
+            quizZoneInverse.classList.toggle('hidden', currentMode !== 'quiz-inverse');
+        }
+
+
+        // --- LOGIQUE PRINCIPALE DE RENDU (MODIFIÉE) ---
+
+        function renderNet() {
+            cubeNet.innerHTML = '';
+            quizActive = (currentMode === 'quiz-direct' || currentMode === 'quiz-inverse');
+            
+            if (!quizActive) {
+                 quizFeedbackDirect.textContent = '';
+                 quizFeedbackInverse.textContent = '';
+                 cubeNet.style.perspective = '';
+            }
+
+            // --- MODE 1: APPRENDRE (Patron 2D complet) ---
+            if (currentMode === 'learn') {
+                cubeNet.className = 'grid grid-cols-12 gap-1 max-w-2xl mx-auto select-none'; // Classes de la grille
+
+                netLayout.forEach(row => {
+                    row.forEach(cell => {
+                        const sticker = document.createElement('div');
+                        sticker.className = 'sticker';
+                        const innerSticker = document.createElement('div');
+                        innerSticker.className = 'sticker-inner';
+                        
+                        if (cell === '.') {
+                            sticker.classList.add('face-empty');
+                        } else {
+                            const parts = cell.split(':');
+                            if (parts.length < 2) { sticker.classList.add('face-empty'); } 
+                            else {
+                                const [type, piece, letter] = parts;
+                                const face = piece[0];
+                                
+                                if (faceColors[face]) { sticker.classList.add(faceColors[face]); } 
+                                else { sticker.classList.add('face-empty'); }
+                                
+                                sticker.dataset.piece = piece;
+                                
+                                let text = '';
+                                if (type === 'X') {
+                                    text = face;
+                                    sticker.style.cursor = 'default';
+                                } else if ((type === 'C' && currentType === 'corners') || (type === 'E' && currentType === 'edges')) {
+                                    text = (letter === '.' || !letter) ? '' : letter;
+                                    sticker.dataset.letter = text;
+                                } else {
+                                    sticker.classList.add('opacity-30');
+                                    sticker.style.cursor = 'default';
+                                }
+                                innerSticker.textContent = text;
+                            }
+                        }
+                        sticker.appendChild(innerSticker);
+                        cubeNet.appendChild(sticker);
+                    });
+                });
+            }
+            // --- MODE 2: QUIZ DIRECT (Patron 2D vide) ---
+            else if (currentMode === 'quiz-direct') {
+                cubeNet.className = 'grid grid-cols-12 gap-1 max-w-2xl mx-auto select-none'; // Classes de la grille
+
+                netLayout.forEach(row => {
+                    row.forEach(cell => {
+                        const sticker = document.createElement('div');
+                        sticker.className = 'sticker';
+                        const innerSticker = document.createElement('div');
+                        innerSticker.className = 'sticker-inner';
+                        
+                        if (cell === '.') {
+                            sticker.classList.add('face-empty');
+                        } else {
+                            const parts = cell.split(':');
+                            if (parts.length < 2) { sticker.classList.add('face-empty'); }
+                            else {
+                                const [type, piece, letter] = parts;
+                                const face = piece[0];
+                                
+                                if (faceColors[face]) { sticker.classList.add(faceColors[face]); }
+                                else { sticker.classList.add('face-empty'); }
+                                
+                                if (type === 'X') {
+                                    innerSticker.textContent = face;
+                                    sticker.style.cursor = 'default';
+                                } else if (((type === 'C' && currentType === 'corners') || (type === 'E' && currentType === 'edges')) && letter && letter !== '.') {
+                                    // Pièce quizzable
+                                    sticker.dataset.piece = piece;
+                                    sticker.dataset.letter = letter;
+                                    sticker.addEventListener('click', handleQuizDirectClick); // Attacher l'écouteur
+                                } else {
+                                    sticker.classList.add('opacity-30');
+                                    sticker.style.cursor = 'default';
+                                }
+                            }
+                        }
+                        sticker.appendChild(innerSticker);
+                        cubeNet.appendChild(sticker);
+                    });
+                });
+            }
+            // --- MODE 3: QUIZ INVERSE (Pièce 3D) ---
+            else if (currentMode === 'quiz-inverse' && quizTargetPiece) {
+                cubeNet.className = 'flex justify-center items-center max-w-2xl mx-auto select-none min-h-[400px]'; // Classes Flex pour centrer
+                cubeNet.style.perspective = '1000px';
+
+                const pieceContainer = document.createElement('div');
+                pieceContainer.className = 'quiz-piece-container';
+
+                const normalize = (s) => s.split('').sort().join('');
+                const targetNormalized = normalize(quizTargetPiece);
+                const pieceStickersData = [];
+
+                // 1. Trouver tous les stickers de la pièce
+                netLayout.forEach(row => {
+                    row.forEach(cell => {
+                        const parts = cell.split(':');
+                        if (parts.length > 1) {
+                            const [type, piece, letter] = parts;
+                            if (type !== 'X' && normalize(piece) === targetNormalized) {
+                                pieceStickersData.push({ cell, type, piece, letter, face: piece[0] });
+                            }
+                        }
+                    });
+                });
+
+                // 2. Afficher les stickers en position standard (UFR)
+                const targetStickerData = pieceStickersData.find(s => s.piece === quizTargetPiece);
+                const otherStickersData = pieceStickersData.filter(s => s.piece !== quizTargetPiece);
+                const orderedStickers = [targetStickerData].concat(otherStickersData);
+
+                // CORRIGÉ: Utilise iso-R pour matcher le CSS (rotateY(45deg))
+                const standardClasses = (orderedStickers.length === 3) 
+                    ? ['iso-U', 'iso-F', 'iso-R']  // Pour les coins
+                    : ['iso-U', 'iso-F'];         // Pour les arêtes
+
+                orderedStickers.forEach((stickerData, index) => {
+                    if (!stickerData) return; // Sécurité si pièce mal définie
+                    const sticker = document.createElement('div');
+                    sticker.className = 'quiz-view-sticker';
+                    sticker.classList.add(faceColors[stickerData.face]);
+                    
+                    if (index < standardClasses.length) {
+                        sticker.classList.add(standardClasses[index]); 
+                    } else {
+                         sticker.classList.add('iso-F'); // Fallback
+                    }
+                    sticker.dataset.piece = stickerData.piece;
+
+                    const innerSticker = document.createElement('div');
+                    innerSticker.className = 'sticker-inner';
+                    
+                    if (stickerData.piece === quizTargetPiece) {
+                        sticker.classList.add('quiz-view-highlight');
+                        innerSticker.textContent = '?';
+                    } else {
+                        innerSticker.textContent = '';
+                    }
+                    sticker.appendChild(innerSticker);
+                    pieceContainer.appendChild(sticker);
+                });
+                cubeNet.appendChild(pieceContainer);
+            }
+        }
+
+        // --- GESTION DES QUIZ (ROUTER) ---
+
+        function startQuiz() {
+            quizActive = true;
+            
+            // Construit la liste des quiz possibles
+            const quizItems = [];
+            netLayout.forEach(row => {
+                row.forEach(cell => {
+                    if (cell !== '.') {
+                        const parts = cell.split(':');
+                        if (parts.length === 3) {
+                            const [type, piece, letter] = parts;
+                            if (letter && letter !== '.' && ((type === 'C' && currentType === 'corners') || (type === 'E' && currentType === 'edges'))) {
+                                quizItems.push({ piece, letter });
+                            }
+                        }
+                    }
+                });
+            });
+
+            if (quizItems.length === 0) {
+                quizPromptDirect.textContent = "Aucune pièce trouvée !";
+                quizPromptInverse.textContent = "Aucune pièce trouvée !";
+                quizActive = false;
+                return;
+            }
+
+            const randomItem = quizItems[Math.floor(Math.random() * quizItems.length)];
+            quizTargetPiece = randomItem.piece;
+            quizTargetLetter = randomItem.letter;
+
+            // Brancher vers le bon quiz
+            if (currentMode === 'quiz-direct') {
+                startQuizDirect();
+            } else if (currentMode === 'quiz-inverse') {
+                startQuizInverse();
+            }
+        }
+
+        // --- QUIZ 1: DIRECT (LETTRE -> PIÈCE) ---
+
+        function startQuizDirect() {
+            quizFeedbackDirect.textContent = '';
+            quizFeedbackDirect.classList.remove('text-green-400', 'text-red-400');
+            quizPromptDirect.textContent = `Trouvez : ${quizTargetLetter}`;
+            renderNet(); // Rend un filet vide
+        }
+
+        function handleQuizDirectClick(event) {
+            if (!quizActive) return;
+
+            const clickedPiece = event.currentTarget.dataset.piece;
+            
+            if (clickedPiece === quizTargetPiece) {
+                // Correct
+                quizFeedbackDirect.textContent = 'Correct !';
+                quizFeedbackDirect.classList.add('text-green-400');
+                quizFeedbackDirect.classList.remove('text-red-400');
+                quizActive = false;
+                event.currentTarget.querySelector('.sticker-inner').textContent = quizTargetLetter;
+                setTimeout(startQuiz, 1200);
+
+            } else {
+                // Faux
+                quizFeedbackDirect.textContent = `Faux. C'était ${quizTargetPiece}.`;
+                quizFeedbackDirect.classList.add('text-red-400');
+                quizFeedbackDirect.classList.remove('text-green-400');
+                quizActive = false;
+
+                // Montrer la bonne réponse
+                const allStickers = document.querySelectorAll('.sticker');
+                allStickers.forEach(s => {
+                    if (s.dataset.piece === quizTargetPiece) {
+                        s.querySelector('.sticker-inner').textContent = quizTargetLetter;
+                        s.classList.add('border-4', 'border-green-400');
+                    }
+                });
+                event.currentTarget.classList.add('border-4', 'border-red-400');
+                setTimeout(startQuiz, 2000);
+            }
+        }
+
+        // --- QUIZ 2: INVERSE (PIÈCE -> LETTRE) ---
+
+        function setupQuizInput() {
+            btnSubmitGuess.addEventListener('click', handleSubmitGuess);
+            quizInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    handleSubmitGuess();
+                }
+            });
+        }
+
+        function startQuizInverse() {
+            quizFeedbackInverse.textContent = '';
+            quizFeedbackInverse.classList.remove('text-green-400', 'text-red-400');
+            quizInput.value = '';
+            quizInput.focus();
+            quizPromptInverse.textContent = "Quelle est la lettre pour cette pièce ?";
+            renderNet(); // Rend la pièce unique
+        }
+
+        function handleSubmitGuess() {
+            if (!quizActive) return;
+            
+            const guess = quizInput.value.trim().toUpperCase();
+            if (guess.length === 0) return;
+
+            if (guess === quizTargetLetter) {
+                quizFeedbackInverse.textContent = 'Correct !';
+                quizFeedbackInverse.classList.add('text-green-400');
+                quizFeedbackInverse.classList.remove('text-red-400');
+                quizActive = false;
+                showQuizAnswer(true);
+                setTimeout(startQuiz, 1200);
+
+            } else {
+                quizFeedbackInverse.textContent = `Faux. C'était : ${quizTargetLetter}`;
+                quizFeedbackInverse.classList.add('text-red-400');
+                quizFeedbackInverse.classList.remove('text-green-400');
+                quizActive = false;
+                showQuizAnswer(false);
+                setTimeout(startQuiz, 2000);
+            }
+        }
+        
+        function showQuizAnswer(isCorrect) {
+            const allStickers = cubeNet.querySelectorAll('.quiz-view-sticker');
+            if (allStickers.length === 0) return;
+
+            allStickers.forEach(sticker => {
+                if (sticker.dataset.piece === quizTargetPiece) {
+                    const innerSticker = sticker.querySelector('.sticker-inner');
+                    innerSticker.textContent = quizTargetLetter;
+                    sticker.classList.remove('quiz-view-highlight');
+
+                    if (isCorrect) {
+                        sticker.style.borderColor = '#10B981'; // Vert
+                        sticker.style.boxShadow = '0 0 20px #10B981';
+                    } else {
+                        sticker.style.borderColor = '#EF4444'; // Rouge
+                        sticker.style.boxShadow = '0 0 20px #EF4444';
+                    }
+                } else {
+                    sticker.style.opacity = '0.5';
+                }
+            });
+        }
+
+    </script>
+</body>
+</html>
