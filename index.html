@@ -103,7 +103,7 @@
             height: 10rem;
             transform-style: preserve-3d;
             /* Rotation pour la vue isométrique UFR (Haut-Avant-Droite) */
-            transform: rotateX(-33deg) rotateY(-45deg);
+            transform: rotateX(-33deg) rotateY(45deg);
             margin-top: 4rem;
             margin-bottom: 4rem;
         }
@@ -149,8 +149,8 @@
     <div class="w-full max-w-4xl mx-auto">
         
         <header class="text-center mb-6 relative">
-            <h1 class="text-3xl sm:text-4xl font-bold text-white">Apprentissage Blind (Notations)</h1>
-            <p class="text-lg text-gray-400 mt-2">Schéma de lettrage Chichu</p>
+            <h1 class="text-3xl sm:text-4xl font-bold text-white">Apprentissage Blind (Complet)</h1>
+            <p class="text-lg text-gray-400 mt-2">Schéma de lettrage personnalisable</p>
             <button id="btn-settings" class="absolute top-0 right-0 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition">
                 Modifier
             </button>
@@ -161,7 +161,7 @@
             <button id="btn-corners" class="tab-btn px-6 py-2 rounded-lg font-semibold text-lg transition duration-200">Coins</button>
             <button id="btn-edges" class="tab-btn px-6 py-2 rounded-lg font-semibold text-lg transition duration-200">Arêtes</button>
         </div>
-        <!-- Sélecteurs d'onglets (Mode) - MODIFIÉ -->
+        <!-- Sélecteurs d'onglets (Mode) -->
         <div class="flex flex-wrap justify-center gap-4 mb-6">
             <button id="btn-learn" class="mode-btn px-5 py-2 rounded-lg font-medium transition duration-200">Apprendre</button>
             <button id="btn-quiz-direct" class="mode-btn px-5 py-2 rounded-lg font-medium transition duration-200">Quiz (Lettre -> Pièce)</button>
@@ -192,7 +192,7 @@
 
     </div>
 
-    <!-- Modal de Paramètres (Identique aux deux fichiers) -->
+    <!-- Modal de Paramètres -->
     <div id="settings-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
@@ -205,7 +205,6 @@
             </p>
             
             <!-- Grille d'édition -->
-            <!-- CORRECTION: Ajout de la div manquante pour la grille -->
             <div id="settings-grid" class="grid grid-cols-12 gap-1 mb-4">
                 <!-- La grille d'inputs sera générée par JS -->
             </div>
@@ -228,24 +227,28 @@
 
 
     <script>
-        // --- SCHÉMA ET ÉTAT GLOBAL ---
+        // --- CONFIGURATION ---
+        
+        // IMPORTANT: Changez ce nombre (1, 2, 3...) à chaque fois que vous modifiez 'defaultNetLayout'
+        // Cela forcera l'application à recharger vos nouvelles valeurs par défaut.
+        const CONFIG_VERSION = 2;
 
         // Schéma par défaut
         const defaultNetLayout = [
-            ['.', '.', '.', 'C:UBL:D', 'E:UB:E', 'C:UBR:G', '.', '.', '.', '.', '.', '.'],
-            ['.', '.', '.', 'E:UL:C',  'X:U',    'E:UR:G',  '.', '.', '.', '.', '.', '.'],
-            ['.', '.', '.', 'C:UFL:A', 'E:UF:A', 'C:UFR:J', '.', '.', '.', '.', '.', '.'],
+            ['.', '.', '.', 'C:UBL:A', 'E:UB:A', 'C:UBR:B', '.', '.', '.', '.', '.', '.'],
+            ['.', '.', '.', 'E:UL:D',  'X:U',    'E:UR:B',  '.', '.', '.', '.', '.', '.'],
+            ['.', '.', '.', 'C:UFL:D', 'E:UF:C', 'C:UFR:C', '.', '.', '.', '.', '.', '.'],
 
-            ['C:LBU:E', 'E:LU:D', 'C:LUF:C', 'C:FLU:B', 'E:FU:B', 'C:FRU:L', 'C:RUF:K', 'E:RU:H', 'C:RBU:I', 'C:BUR:H', 'E:BU:F', 'C:BUL:F'],
-            ['E:LB:X',  'X:L',    'E:LF:T',  'E:FL:S',  'X:F',    'E:FR:Q',  'E:RF:R',  'X:R',    'E:RB:Z',  'E:BL:Y',  'X:B',    'E:BR:W'],
-            ['C:LDB:Q', 'E:LD:L', 'C:LFD:M', 'C:FLD:N', 'E:FD:J', 'C:FDR:Y', 'C:RDF:Z', 'E:RD:P', 'C:RBD:S', 'C:BDL:T', 'E:BD:N', 'C:BDR:P'],
+            ['C:LBU:E', 'E:LU:E', 'C:LUF:F', 'C:FLU:I', 'E:FU:I', 'C:FRU:J', 'C:RUF:M', 'E:RU:M', 'C:RBU:N', 'C:BUR:Q', 'E:BU:Q', 'C:BUL:R'],
+            ['E:LB:H',  'X:L',    'E:LF:F',  'E:FL:L',  'X:F',    'E:FR:J',  'E:RF:P',  'X:R',    'E:RB:N',  'E:BL:T',  'X:B',    'E:BR:R'],
+            ['C:LDB:H', 'E:LD:G', 'C:LFD:G', 'C:FLD:L', 'E:FD:K', 'C:FDR:K', 'C:RDF:P', 'E:RD:O', 'C:RBD:O', 'C:BDL:T', 'E:BD:S', 'C:BDR:S'],
             
-            ['.', '.', '.', 'C:DFL:W', 'E:DF:I', 'C:DFR:X', '.', '.', '.', '.', '.', '.'],
-            ['.', '.', '.', 'E:DL:K',  'X:D',    'E:DR:O',  '.', '.', '.', '.', '.', '.'],
-            ['.', '.', '.', 'C:DBL:O', 'E:DB:M', 'C:DBR:R', '.', '.', '.', '.', '.', '.']
+            ['.', '.', '.', 'C:DFL:U', 'E:DF:U', 'C:DFR:V', '.', '.', '.', '.', '.', '.'],
+            ['.', '.', '.', 'E:DL:X',  'X:D',    'E:DR:V',  '.', '.', '.', '.', '.', '.'],
+            ['.', '.', '.', 'C:DBL:X', 'E:DB:W', 'C:DBR:W', '.', '.', '.', '.', '.', '.']
         ];
         
-        let netLayout; // Le schéma principal (chargé depuis localStorage)
+        let netLayout; // Le schéma principal
         
         const faceColors = {
             U: 'face-U', L: 'face-L', F: 'face-F', R: 'face-R', B: 'face-B', D: 'face-D'
@@ -264,12 +267,12 @@
         // Boutons de Type
         const btnCorners = document.getElementById('btn-corners');
         const btnEdges = document.getElementById('btn-edges');
-        // Boutons de Mode (MODIFIÉ)
+        // Boutons de Mode
         const btnLearn = document.getElementById('btn-learn');
         const btnQuizDirect = document.getElementById('btn-quiz-direct');
         const btnQuizInverse = document.getElementById('btn-quiz-inverse');
         
-        // Zones de Quiz (MODIFIÉ)
+        // Zones de Quiz
         const quizZoneDirect = document.getElementById('quiz-zone-direct');
         const quizPromptDirect = document.getElementById('quiz-prompt-direct');
         const quizFeedbackDirect = document.getElementById('quiz-feedback-direct');
@@ -294,14 +297,28 @@
         loadLayout();
         setupTabs();
         setupSettingsModal();
-        setupQuizInput(); // Pour le quiz inverse
+        setupQuizInput();
         renderNet();
         
         // --- GESTION DES PARAMÈTRES (MODAL) ---
-        // (Copie de la logique des fichiers précédents)
 
         function loadLayout() {
+            // Vérification de la version
+            const savedVersion = localStorage.getItem('blindTrainerVersion');
             const savedLayout = localStorage.getItem('blindTrainerLayout');
+
+            // Si la version du code est différente de celle sauvegardée, on force la mise à jour
+            if (savedVersion != CONFIG_VERSION) {
+                console.log("Nouvelle version détectée (ou première visite). Chargement des défauts.");
+                netLayout = JSON.parse(JSON.stringify(defaultNetLayout));
+                
+                // On met à jour le stockage immédiatement
+                localStorage.setItem('blindTrainerLayout', JSON.stringify(netLayout));
+                localStorage.setItem('blindTrainerVersion', CONFIG_VERSION);
+                return;
+            }
+
+            // Sinon, on essaie de charger la sauvegarde utilisateur
             try {
                 if (savedLayout) {
                     const parsedLayout = JSON.parse(savedLayout);
@@ -311,8 +328,10 @@
                     }
                 }
             } catch (e) {
-                localStorage.removeItem('blindTrainerLayout'); 
+                console.error("Erreur chargement, reset...", e);
             }
+            
+            // Fallback
             netLayout = JSON.parse(JSON.stringify(defaultNetLayout));
         }
         
@@ -320,9 +339,13 @@
             btnSettings.addEventListener('click', openSettingsModal);
             btnCloseModal.addEventListener('click', closeSettingsModal);
             btnCancelSettings.addEventListener('click', closeSettingsModal);
+            
             settingsModal.addEventListener('click', (e) => {
-                if (e.target === settingsModal) closeSettingsModal();
+                if (e.target === settingsModal) {
+                    closeSettingsModal();
+                }
             });
+            
             btnSaveSettings.addEventListener('click', saveSettings);
             btnResetSettings.addEventListener('click', resetSettings);
         }
@@ -372,7 +395,6 @@
             });
         }
 
-        // NOUVEAU: Sauvegarder les modifications
         function saveSettings() {
             const inputs = settingsGrid.querySelectorAll('input');
             const newLayout = [];
@@ -386,16 +408,14 @@
                 }
                 
                 if (input.disabled) {
-                    // Si l'input est désactivé (centre ou vide), on reprend sa valeur d'origine
                     newLayout[rowIndex].push(input.value);
                 } else {
-                    // Si c'est un champ de lettre éditable
-                    const prefix = input.dataset.prefix; // ex: "C:UFL:"
+                    const prefix = input.dataset.prefix; 
                     let newLetter = input.value.trim().toUpperCase();
                     if (newLetter === '') {
-                        newLetter = '.'; // Traite un champ vide comme un buffer
+                        newLetter = '.'; 
                     }
-                    newLayout[rowIndex].push(prefix + newLetter); // Reconstruit "C:UFL:A"
+                    newLayout[rowIndex].push(prefix + newLetter);
                 }
             });
             
@@ -405,29 +425,28 @@
             // Sauvegarder dans localStorage
             try {
                 localStorage.setItem('blindTrainerLayout', JSON.stringify(netLayout));
+                // On garde la version actuelle car c'est une modif utilisateur valide
+                localStorage.setItem('blindTrainerVersion', CONFIG_VERSION);
             } catch (e) {
-                console.error("Erreur lors de la sauvegarde du schéma:", e);
+                console.error("Erreur sauvegarde:", e);
             }
             
-            // Fermer le modal et mettre à jour l'application
             closeSettingsModal();
             renderNet();
         }
-
-        // CORRECTION: Ajout de la fonction resetSettings() manquante
+        
         function resetSettings() {
             if (confirm("Voulez-vous vraiment réinitialiser le schéma par défaut ?\nVos modifications seront perdues.")) {
                 localStorage.removeItem('blindTrainerLayout');
+                // On recharge les défauts du code
                 netLayout = JSON.parse(JSON.stringify(defaultNetLayout));
-                
-                // Le plus simple est d'appeler saveSettings, qui met à jour le layout,
-                // sauvegarde, ferme le modal et re-render.
+                // On simule une sauvegarde pour rafraîchir l'UI
                 saveSettings();
             }
         }
 
-        // --- GESTION DES ONGLETS ET MODES (MODIFIÉ) ---
-        // CORRECTION: Remplacement du code erroné par la fonction setupTabs()
+        // --- GESTION DES ONGLETS ET MODES ---
+
         function setupTabs() {
             // Boutons de Type
             btnCorners.addEventListener('click', () => {
@@ -483,7 +502,7 @@
         }
 
 
-        // --- LOGIQUE PRINCIPALE DE RENDU (MODIFIÉE) ---
+        // --- LOGIQUE PRINCIPALE DE RENDU ---
 
         function renderNet() {
             cubeNet.innerHTML = '';
